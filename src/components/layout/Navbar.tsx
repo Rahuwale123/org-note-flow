@@ -2,7 +2,8 @@ import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { LogOut, Users, Shield, UserCheck } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, organization, logout } = useAuth();
@@ -14,6 +15,8 @@ export const Navbar: React.FC = () => {
       .join('')
       .toUpperCase();
   };
+
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <nav className="border-b bg-card shadow-sm">
@@ -34,9 +37,15 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <div className="text-right">
                   <p className="text-sm font-medium">{user.username}</p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {user.role.toLowerCase()}
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <Badge 
+                      variant={isAdmin ? 'default' : 'secondary'} 
+                      className="text-xs flex items-center space-x-1"
+                    >
+                      {isAdmin ? <Shield className="h-3 w-3" /> : <UserCheck className="h-3 w-3" />}
+                      <span className="capitalize">{user.role.toLowerCase()}</span>
+                    </Badge>
+                  </div>
                 </div>
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-primary text-primary-foreground text-xs">

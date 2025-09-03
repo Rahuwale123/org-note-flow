@@ -44,6 +44,7 @@ export interface AuthResponse {
 export interface SignupRequest {
   username: string;
   password: string;
+  organization_name: string; // Now required for all signups
 }
 
 export interface LoginRequest {

@@ -11,4 +11,9 @@ export const authApi = {
     const response = await apiClient.post('/api/v1/auth/login', data);
     return response.data;
   },
+
+  getCurrentUser: async (): Promise<User> => {
+    const response = await apiClient.get('/api/v1/auth/me');
+    return response.data;
+  },
 };

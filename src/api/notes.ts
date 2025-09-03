@@ -7,6 +7,11 @@ export const notesApi = {
     return response.data;
   },
 
+  getMyNotes: async (): Promise<Note[]> => {
+    const response = await apiClient.get('/api/v1/notes/my-notes');
+    return response.data;
+  },
+
   createNote: async (data: CreateNoteRequest): Promise<Note> => {
     const response = await apiClient.post('/api/v1/notes', data);
     return response.data;

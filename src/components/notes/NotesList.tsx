@@ -11,7 +11,11 @@ import { NoteForm } from './NoteForm';
 import { EditNoteDialog } from './EditNoteDialog';
 import type { Note } from '../../types';
 
-export const NotesList: React.FC = () => {
+interface NotesListProps {
+  personalOnly?: boolean;
+}
+
+export const NotesList: React.FC<NotesListProps> = ({ personalOnly = false }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -19,8 +23,8 @@ export const NotesList: React.FC = () => {
   const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   const { data: notes, isLoading, error } = useQuery({
-    queryKey: ['notes'],
-    queryFn: notesApi.getAllNotes,
+    queryKey: ['notes', personalOnly],
+    queryFn: personalOnly ? notesApi.getMyNotes : notesApi.getAllNotes,
   });
 
   const deleteMutation = useMutation({
@@ -48,6 +52,7 @@ export const NotesList: React.FC = () => {
   };
 
   const canEdit = user?.role === 'ADMIN';
+  const canDelete = user?.role === 'ADMIN';
 
   if (isLoading) {
     return (
@@ -117,6 +122,21 @@ export const NotesList: React.FC = () => {
         </Card>
       ) : (
         <div className="space-y-4">
+          {/* Permission Info Card */}
+          {user?.role === 'MEMBER' && (
+            <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20">
+              <CardContent className="pt-4">
+                <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                  <FileText className="h-4 w-4" />
+                  <p className="text-sm font-medium">Member Permissions</p>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  You can create and view notes. Only admins can edit or delete notes.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {notes?.map((note) => (
             <Card key={note.id} className="hover:shadow-md transition-all duration-200">
               <CardHeader>
@@ -127,8 +147,8 @@ export const NotesList: React.FC = () => {
                       By {note.created_by_username} • {new Date(note.created_at).toLocaleDateString()}
                     </CardDescription>
                   </div>
-                  {canEdit && (
-                    <div className="flex space-x-2">
+                  <div className="flex space-x-2">
+                    {canEdit && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -137,6 +157,8 @@ export const NotesList: React.FC = () => {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
+                    )}
+                    {canDelete && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -146,8 +168,8 @@ export const NotesList: React.FC = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>

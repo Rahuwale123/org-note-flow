@@ -7,6 +7,11 @@ export const todosApi = {
     return response.data;
   },
 
+  getMyTodos: async (): Promise<Todo[]> => {
+    const response = await apiClient.get('/api/v1/todos/my-todos');
+    return response.data;
+  },
+
   createTodo: async (data: CreateTodoRequest): Promise<Todo> => {
     const response = await apiClient.post('/api/v1/todos', data);
     return response.data;

@@ -13,7 +13,11 @@ import { EditTodoDialog } from './EditTodoDialog';
 import type { Todo } from '../../types';
 import { cn } from '@/lib/utils';
 
-export const TodosList: React.FC = () => {
+interface TodosListProps {
+  personalOnly?: boolean;
+}
+
+export const TodosList: React.FC<TodosListProps> = ({ personalOnly = false }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -21,8 +25,8 @@ export const TodosList: React.FC = () => {
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
   const { data: todos, isLoading, error } = useQuery({
-    queryKey: ['todos'],
-    queryFn: todosApi.getAllTodos,
+    queryKey: ['todos', personalOnly],
+    queryFn: personalOnly ? todosApi.getMyTodos : todosApi.getAllTodos,
   });
 
   const updateMutation = useMutation({
@@ -74,7 +78,9 @@ export const TodosList: React.FC = () => {
     }
   };
 
-  const canEdit = user?.role === 'ADMIN';
+  const canEdit = user?.role === 'ADMIN' || user?.role === 'MEMBER';
+  const canDelete = user?.role === 'ADMIN';
+  const canEditOwn = user?.role === 'MEMBER';
   const completedCount = todos?.filter(todo => todo.completed).length || 0;
   const totalCount = todos?.length || 0;
 
@@ -147,6 +153,21 @@ export const TodosList: React.FC = () => {
         </Card>
       ) : (
         <div className="space-y-3">
+          {/* Permission Info Card */}
+          {user?.role === 'MEMBER' && (
+            <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20">
+              <CardContent className="pt-4">
+                <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                  <CheckSquare className="h-4 w-4" />
+                  <p className="text-sm font-medium">Member Permissions</p>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  You can create, view, and edit your own todos. Only admins can delete todos.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {todos?.map((todo) => (
             <Card 
               key={todo.id} 
@@ -173,20 +194,30 @@ export const TodosList: React.FC = () => {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         By {todo.created_by_username} • {new Date(todo.created_at).toLocaleDateString()}
+                        {todo.created_by === user?.id && (
+                          <span className="ml-2 text-blue-600 dark:text-blue-400">(You)</span>
+                        )}
                       </p>
                     </div>
                   </div>
                   
-                  {canEdit && (
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingTodo(todo)}
-                        className="hover:bg-primary/10"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                  <div className="flex space-x-2">
+                    {canEdit && (
+                      <>
+                        {(user?.role === 'ADMIN' || (canEditOwn && todo.created_by === user?.id)) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingTodo(todo)}
+                            className="hover:bg-primary/10"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    
+                    {canDelete && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -196,8 +227,8 @@ export const TodosList: React.FC = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
